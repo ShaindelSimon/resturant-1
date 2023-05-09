@@ -1,5 +1,5 @@
 //Manasvi Goyal DTU
-//njkuhgtdte
+
 #include <iostream>
 #include<conio.h>
 #include<string.h>
@@ -9,9 +9,9 @@
 #include <sys\/types.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include "fstream"
 
 using namespace std;
-
 class User;
 
 class Display
@@ -54,6 +54,9 @@ class CustomerMain
         void orderFood();
         int showBill(int);
         void checkOut(int);
+        bool validateCouponCode(string couponCode);
+        double applyDiscount(double billamount);
+        bool validateCouponCode(string str, string filename);
 };
 
 class Admin : public Display
@@ -733,9 +736,28 @@ void CustomerMain::orderFood()
     getch();
     customerPage();
 }
+bool CustomerMain::validateCouponCode(string str, string filename) {
+    ifstream file(filename);
+
+    if (!file.is_open()) {
+        cout<<"error"<<endl;
+        return false;
+    }
+
+    string fileContent((istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()));
+    file.close();
+
+    return (str == fileContent);
+}
+
+double CustomerMain::applyDiscount(double billamount){
+    return billamount*0.75;
+}
 
 int CustomerMain::showBill(int tn)
 {
+    int there_is_coupon;
+    string couponCode;
     Customer c;
     FILE *fp,*fp1;
     Menu m;
@@ -748,6 +770,12 @@ int CustomerMain::showBill(int tn)
     }
     else
     {
+        cout<<"Enter 1 if you have a coupon code and 2 if you don't have one"<<endl;
+        cin>>there_is_coupon;
+        if(there_is_coupon==1){
+            cout<<"Please enter the coupon code"<<endl;
+            cin>>couponCode;
+        }
         while(fread(&c,sizeof(Customer),1,fp))
         {
             if(c.tableNumber==tn)
@@ -785,8 +813,15 @@ int CustomerMain::showBill(int tn)
         fclose(fp);
         fclose(fp1);
     }
+    if(validateCouponCode(couponCode, "CouponCode.txt")&&(there_is_coupon==1)){
+        int finalPrice = applyDiscount(billamount);
+        cout << "Congratulations, your coupon code is valid! Your discounted price is: " << finalPrice << " shekels" << endl;
+        return finalPrice;
+    } else
+        cout<<"Sorry, your coupon code is incorrect, please contact the manager"<<endl;
     return billamount;
 }
+
 
 void CustomerMain::checkOut(int tableno)
 {
